@@ -1,0 +1,241 @@
+// Prisma schema for Idea Bank
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+// User model for authentication
+model User {
+  id            String   @id @default(cuid())
+  email         String   @unique
+  name          String?
+  password      String?
+  emailVerified DateTime?
+  image         String?
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  // Relationships
+  ideas    Idea[]
+  accounts Account[]
+  sessions Session[]
+
+  @@index([email])
+}
+
+// NextAuth Account model
+model Account {
+  id                String  @id @default(cuid())
+  userId            String
+  type              String
+  provider          String
+  providerAccountId String
+  refresh_token     String? @db.Text
+  access_token      String? @db.Text
+  expires_at        Int?
+  token_type        String?
+  scope             String?
+  id_token          String? @db.Text
+  session_state     String?
+
+  user User @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@unique([provider, providerAccountId])
+}
+
+// NextAuth Session model
+model Session {
+  id           String   @id @default(cuid())
+  sessionToken String   @unique
+  userId       String
+  expires      DateTime
+  user         User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+}
+
+// NextAuth VerificationToken model
+model VerificationToken {
+  identifier String
+  token      String   @unique
+  expires    DateTime
+
+  @@unique([identifier, token])
+}
+
+// Idea model - core entity
+model Idea {
+  id        String   @id @default(cuid())
+  title     String
+  content   String   @db.Text // Rich text JSON (Tiptap)
+  contentText String @db.Text // Plain text for search/AI
+
+  status          IdeaStatus       @default(ACTIVE)
+  marketSaturation MarketSaturation @default(UNCLEAR)
+
+  // Timestamps
+  createdAt        DateTime  @default(now())
+  updatedAt        DateTime  @updatedAt
+  lastResearchedAt DateTime?
+
+  // Relationships
+  userId String
+  user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  tags            IdeaTag[]
+  researchResults ResearchResult[]
+  aiInsights      AiInsight[]
+  researchJobs    ResearchJob[]
+
+  @@index([userId, updatedAt])
+  @@index([title])
+}
+
+enum IdeaStatus {
+  ACTIVE
+  ARCHIVED
+  RESEARCHING
+}
+
+enum MarketSaturation {
+  SATURATED
+  COMPETITIVE
+  MODERATE
+  EMERGING
+  UNCLEAR
+}
+
+// Tag model
+model Tag {
+  id    String @id @default(cuid())
+  name  String @unique
+  color String?
+
+  ideas IdeaTag[]
+
+  @@index([name])
+}
+
+// Join table for Ideas and Tags (many-to-many)
+model IdeaTag {
+  ideaId String
+  tagId  String
+
+  idea Idea @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+  tag  Tag  @relation(fields: [tagId], references: [id], onDelete: Cascade)
+
+  @@id([ideaId, tagId])
+}
+
+// Research Result model - stores all research findings
+model ResearchResult {
+  id          String   @id @default(cuid())
+  ideaId      String
+  idea        Idea     @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  type   ResearchType
+  source String // "web", "product_hunt", "crunchbase", "github", etc.
+
+  title       String
+  description String?  @db.Text
+  url         String?
+  imageUrl    String?
+
+  similarityScore Float   @default(0)
+  relevanceScore  Float   @default(0.5)
+  projectStatus   ProjectStatus?
+
+  // JSON fields for flexible data
+  pricing    Json?
+  positioning Json?
+  metadata   Json?
+
+  createdAt DateTime @default(now())
+  dismissed Boolean  @default(false)
+  saved     Boolean  @default(false)
+
+  @@index([ideaId, createdAt])
+  @@index([similarityScore])
+}
+
+enum ResearchType {
+  WEB_SEARCH
+  PRODUCT
+  STARTUP
+  REPOSITORY
+  NEWS
+  COMMUNITY_DISCUSSION
+  PERSON_OF_INTEREST
+}
+
+enum ProjectStatus {
+  ACTIVE
+  FAILED
+  ACQUIRED
+  DORMANT
+}
+
+// AI Insight model - stores AI-generated analysis
+model AiInsight {
+  id      String      @id @default(cuid())
+  ideaId  String
+  idea    Idea        @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  type       InsightType
+  content    String      @db.Text
+  confidence Float       @default(0.5)
+
+  // Moat analysis fields
+  moatStrength  MoatStrength?
+  networkEffect Boolean?
+
+  createdAt DateTime @default(now())
+
+  @@index([ideaId, type])
+}
+
+enum InsightType {
+  NOVELTY_ASSESSMENT
+  CATEGORY
+  KEY_CONCEPTS
+  CHALLENGES
+  OPPORTUNITIES
+  MARKET_POTENTIAL
+  RELATED_IDEAS
+  MOAT_ANALYSIS
+  FEATURE_COMPARISON
+}
+
+enum MoatStrength {
+  STRONG
+  MODERATE
+  WEAK
+  NONE
+}
+
+// Research Job model - tracks background job processing
+model ResearchJob {
+  id     String @id @default(cuid())
+  ideaId String
+  idea   Idea   @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  jobId String @unique // BullMQ job ID
+
+  status JobStatus @default(PENDING)
+  type   String
+
+  createdAt   DateTime  @default(now())
+  completedAt DateTime?
+  error       String?   @db.Text
+
+  @@index([ideaId, status])
+}
+
+enum JobStatus {
+  PENDING
+  PROCESSING
+  COMPLETED
+  FAILED
+}
