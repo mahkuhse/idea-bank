@@ -75,6 +75,10 @@ model Idea {
   status          IdeaStatus       @default(ACTIVE)
   marketSaturation MarketSaturation @default(UNCLEAR)
 
+  // NEW: Ranking and organization
+  rank            Int?    // User-defined ranking (1, 2, 3, etc.)
+  isShelved       Boolean @default(false) // Archived/shelved ideas
+
   // Timestamps
   createdAt        DateTime  @default(now())
   updatedAt        DateTime  @updatedAt
@@ -88,8 +92,12 @@ model Idea {
   researchResults ResearchResult[]
   aiInsights      AiInsight[]
   researchJobs    ResearchJob[]
+  attachments     Attachment[]
+  researchProgress ResearchProgress[]
+  chatMessages    ChatMessage[]
 
   @@index([userId, updatedAt])
+  @@index([userId, rank])
   @@index([title])
 }
 
@@ -238,4 +246,79 @@ enum JobStatus {
   PROCESSING
   COMPLETED
   FAILED
+}
+
+// NEW: Attachment model - for multi-format files
+model Attachment {
+  id     String @id @default(cuid())
+  ideaId String
+  idea   Idea   @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  fileName    String
+  fileType    String // MIME type
+  fileSize    Int    // bytes
+  storageUrl  String // S3/cloud storage URL
+  thumbnailUrl String? // For images/videos
+
+  uploadedBy String // userId
+  source     AttachmentSource @default(USER_UPLOAD)
+
+  metadata  Json? // Flexible storage for file-specific data
+  createdAt DateTime @default(now())
+
+  @@index([ideaId, createdAt])
+}
+
+enum AttachmentSource {
+  USER_UPLOAD
+  RESEARCH_FINDING // From research workers
+  CHAT_UPLOAD
+}
+
+// NEW: Research Progress model - for real-time streaming updates
+model ResearchProgress {
+  id     String @id @default(cuid())
+  ideaId String
+  idea   Idea   @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  workerType String // "ai-analysis", "web-search", "product-hunt", etc.
+  status     ProgressStatus @default(PENDING)
+  message    String? @db.Text // Current progress message
+
+  resultsCount Int @default(0) // Number of results found so far
+  startedAt    DateTime @default(now())
+  completedAt  DateTime?
+  error        String? @db.Text
+
+  @@index([ideaId, workerType])
+}
+
+enum ProgressStatus {
+  PENDING
+  RUNNING
+  COMPLETED
+  FAILED
+}
+
+// NEW: Chat Message model - for interactive research Q&A
+model ChatMessage {
+  id     String @id @default(cuid())
+  ideaId String
+  idea   Idea   @relation(fields: [ideaId], references: [id], onDelete: Cascade)
+
+  role    ChatRole
+  content String   @db.Text
+
+  // Citations to research results
+  citedResults Json? // Array of ResearchResult IDs
+
+  createdAt DateTime @default(now())
+
+  @@index([ideaId, createdAt])
+}
+
+enum ChatRole {
+  USER
+  ASSISTANT
+  SYSTEM
 }

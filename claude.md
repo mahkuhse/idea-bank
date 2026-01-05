@@ -1,14 +1,17 @@
 # Claude Context: Idea Bank
 
 ## Quick Overview
-An intelligent idea bank that automatically researches business ideas as you write. **Core philosophy: Neutral, complete research** - no false encouragement, just comprehensive facts.
+An intelligent idea bank that deeply researches business ideas on-demand. **Core philosophy: Neutral, complete, consistent research** - no false encouragement, just comprehensive facts.
 
 ## Key Design Principles
 1. **Neutrality First**: Counteract LLM optimism bias. No "Great idea!" - just facts.
-2. **Passive Research**: Triggers automatically on significant changes (>50 words, title change, 7+ days)
+2. **Manual Research Trigger**: User clicks "Research" button when ready - no auto-triggers
 3. **Comprehensive Discovery**: Find what already exists across multiple sources
 4. **Quantified Metrics**: "85% feature overlap" not "very similar"
 5. **No Prescriptive Recommendations**: Provide data, let users decide
+6. **Consistent & Reproducible**: Same input at same time = same results (temperature=0, fact-based)
+7. **Visual Organization**: Each idea is its own space, board view with custom ranking
+8. **Multi-format Support**: Capture everything - text, images, PDFs, videos, links
 
 ## Tech Stack
 - **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS, shadcn/ui
@@ -49,23 +52,43 @@ An intelligent idea bank that automatically researches business ideas as you wri
 - **ResearchJob**: Background job tracking
 
 ## Implementation Phases
-**Current: Phase 1 - Foundation** ✅
+**Phase 1 - Foundation** ✅ COMPLETE
 - [x] Next.js + TypeScript setup
 - [x] Prisma schema with 10 models
 - [x] shadcn/ui configured
-- [ ] NextAuth.js setup
-- [ ] Basic idea CRUD
-- [ ] Idea list & editor pages
+- [x] Basic idea CRUD API routes
+- [x] Idea list & editor pages
+- [x] Auto-save functionality
 
-**Next: Phase 2 - Research Infrastructure** (Week 3-4)
-- BullMQ + Redis setup
-- Claude API integration
-- Research trigger logic
+**Phase 2 - Research Infrastructure** ✅ COMPLETE
+- [x] BullMQ + Redis setup
+- [x] Claude API integration (Sonnet 4)
+- [x] AI analysis worker
+- [x] Background job processing
 
-**Then: Phase 3 - Research Features** (Week 5-6)
-- All research workers (AI, web, Product Hunt, Crunchbase, GitHub)
-- Community discovery, pricing intelligence, moat analysis, people of interest
-- Results UI with SSE streaming
+**Current: Phase 3 - Core MVP** (In Progress)
+- [ ] Remove auto-trigger, add manual "Research" button
+- [ ] Visual board view for ideas
+- [ ] SSE for real-time progress streaming
+- [ ] Web search worker (SerpAPI)
+- [ ] Results display UI (links, structured data)
+- [ ] Database schema updates (attachments, progress, ranking)
+
+**Phase 4 - Extended Research**
+- [ ] Product Hunt worker
+- [ ] GitHub worker
+- [ ] Community discovery worker (Reddit/HN)
+- [ ] File attachments system (multi-format)
+- [ ] Chat interface for research Q&A
+
+**Phase 5 - Polish & Launch**
+- [ ] Ranking/shelving system with drag-drop
+- [ ] Email notifications
+- [ ] Rich text editor (Tiptap)
+- [ ] NextAuth.js authentication
+- [ ] Error boundaries
+- [ ] Testing
+- [ ] Deployment
 
 ## Code Conventions
 1. **File Naming**: kebab-case for files, PascalCase for components
@@ -108,18 +131,27 @@ GITHUB_TOKEN         # GitHub API
 - **Similarity Scoring**: 0-100 feature overlap calculation
 - **Neutral AI Assessment**: Realistic novelty scores, no optimism bias
 
-## Research Flow
+## Research Flow (NEW - Manual Trigger)
 1. User types idea → Auto-save (debounced 2-3s)
-2. Change detection → If >50 words or title change
+2. User clicks **"Research"** button when ready
 3. Queue background jobs → Parallel research workers
-4. AI analysis + Web search + Product Hunt + Crunchbase + GitHub
-5. Stream results via SSE → Update UI progressively
-6. Organize by similarity → 90%+ overlap → 50%+ overlap
+4. AI analysis + Web search + Product Hunt + GitHub + Reddit/HN
+5. Stream progress via SSE → Real-time updates (Claude Code style)
+6. Present results in native formats → Links, images, PDFs, videos
+7. User can interact via chat → Ask questions about research
+8. Organize by similarity/relevance → Structured display
+
+**Key Changes:**
+- No auto-trigger (user controls when)
+- Real-time progress visibility
+- Multi-format result presentation
+- Interactive chat with research
 
 ## Common Tasks
 ```bash
 # Development
 npm run dev              # Start dev server
+npm run worker           # Start background worker (Phase 2+)
 npm run db:generate      # Generate Prisma client
 npm run db:push          # Push schema to DB (no migration)
 npm run db:migrate       # Create migration
@@ -133,15 +165,23 @@ npx prisma studio        # DB GUI
 npx prisma format        # Format schema
 ```
 
+## Running the App (Phase 2+)
+1. **Terminal 1:** `npm run dev` - Next.js server
+2. **Terminal 2:** `npm run worker` - Background research worker
+3. **Setup:** Database (Neon/Supabase) + Redis (Upstash) + Claude API key
+
 ## AI Prompt Guidelines
 When implementing AI features, always:
+- ✅ Use **temperature=0** for consistent, reproducible results
 - ✅ Use neutral language: "Several existing solutions with similar features"
 - ✅ Provide quantified metrics: "85% feature overlap"
 - ✅ List ALL findings: If 8 competitors exist, show all 8
 - ✅ Include challenges AND opportunities
+- ✅ Fact-based analysis: Extract from real data, don't generate
 - ❌ No encouragement: "Great idea!", "This could work!"
 - ❌ No discouragement: "This won't work", "Give up"
 - ❌ No prescriptive advice: "You should...", "Don't..."
+- ❌ No randomness: Same input = same output (at same time)
 
 ### Example AI Prompt Template
 ```typescript
@@ -175,12 +215,29 @@ Be complete, neutral, and factual. Help user see the full picture.
 - Background jobs will be BullMQ (separate worker process)
 - NextAuth for authentication (models already in schema)
 
-## Current Status
-- ✅ Foundation complete (Next.js, Prisma, shadcn/ui)
-- 📍 Next: Basic idea CRUD + pages
-- 🎯 Goal: MVP in 8 weeks
+## Current Status (Jan 5, 2026)
+- ✅ Phase 1 complete (Next.js, Prisma, shadcn/ui, CRUD, pages)
+- ✅ Phase 2 complete (BullMQ, Redis, Claude API, AI worker)
+- 📍 **Now:** Phase 3 - Core MVP (manual trigger, visual board, SSE, web search)
+- 🎯 Goal: Working MVP with full research pipeline
 
-For full details, see [IMPLEMENTATION.md](./IMPLEMENTATION.md)
+**What Works Now:**
+- Create, edit, delete ideas
+- Auto-save with debouncing
+- Search functionality
+- Background AI analysis worker
+- AI insights stored in database
+
+**What's Next (Phase 3 MVP):**
+- Manual "Research" button (remove auto-trigger)
+- Visual board view with idea cards
+- Real-time progress streaming (SSE)
+- Web search worker (first external data source)
+- Results display UI
+- Database schema updates (attachments, progress, ranking)
+
+For full workflow details, see [WORKFLOW.md](./WORKFLOW.md)
+For implementation details, see [IMPLEMENTATION.md](./IMPLEMENTATION.md)
 
 ---
-Last Updated: 2025-12-25
+Last Updated: 2026-01-05
