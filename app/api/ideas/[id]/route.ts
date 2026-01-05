@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { prisma } from '@/lib/db';
+import { checkAndTriggerResearch } from '@/lib/research/trigger';
 
 // GET /api/ideas/[id] - Get a single idea
 export async function GET(
@@ -58,7 +59,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, content, contentText, status } = body;
+    const { title, content, contentText, status, userId } = body;
 
     const idea = await prisma.idea.update({
       where: { id },
@@ -76,6 +77,18 @@ export async function PATCH(
         },
       },
     });
+
+    // Check if research should be triggered
+    if (title !== undefined || contentText !== undefined) {
+      const finalTitle = title !== undefined ? title : idea.title;
+      const finalContent = contentText !== undefined ? contentText : idea.contentText;
+      const finalUserId = userId || idea.userId;
+
+      // Trigger research asynchronously (don't wait)
+      checkAndTriggerResearch(id, finalTitle, finalContent, finalUserId).catch((error) => {
+        console.error('Error triggering research:', error);
+      });
+    }
 
     return NextResponse.json(idea);
   } catch (error) {
