@@ -14,10 +14,10 @@ An intelligent idea bank that deeply researches business ideas on-demand. **Core
 8. **Multi-format Support**: Capture everything - text, images, PDFs, videos, links
 
 ## Tech Stack
-- **Frontend**: Next.js 14 (App Router), TypeScript, Tailwind CSS, shadcn/ui
-- **Database**: PostgreSQL + Prisma ORM (v7)
+- **Frontend**: Next.js 16 (App Router), TypeScript, Tailwind CSS v4, shadcn/ui
+- **Database**: PostgreSQL + Prisma ORM (v5)
 - **Background Jobs**: BullMQ + Redis
-- **AI**: Anthropic Claude API (Sonnet 4.5)
+- **AI**: Anthropic Claude API (Sonnet 4)
 - **APIs**: SerpAPI, Product Hunt, Crunchbase, GitHub
 
 ## Project Structure
@@ -66,13 +66,13 @@ An intelligent idea bank that deeply researches business ideas on-demand. **Core
 - [x] AI analysis worker
 - [x] Background job processing
 
-**Current: Phase 3 - Core MVP** (In Progress)
-- [ ] Remove auto-trigger, add manual "Research" button
-- [ ] Visual board view for ideas
+**Phase 3 - Core MVP** (In Progress)
+- [x] Remove auto-trigger, add manual "Research" button
+- [x] Visual board view for ideas
+- [x] Database schema updates (attachments, progress, ranking)
 - [ ] SSE for real-time progress streaming
 - [ ] Web search worker (SerpAPI)
 - [ ] Results display UI (links, structured data)
-- [ ] Database schema updates (attachments, progress, ranking)
 
 **Phase 4 - Extended Research**
 - [ ] Product Hunt worker
@@ -98,9 +98,8 @@ An intelligent idea bank that deeply researches business ideas on-demand. **Core
 5. **AI Prompts**: Emphasize neutrality, completeness, no encouragement
 
 ## Critical Files Reference
-- `prisma/schema.prisma` - Database schema (10 models)
+- `prisma/schema.prisma` - Database schema (10+ models)
 - `lib/db.ts` - Prisma singleton
-- `IMPLEMENTATION.md` - Full implementation plan with phases
 - `.env.example` - Required environment variables
 
 ## Environment Variables Needed
@@ -209,35 +208,30 @@ Be complete, neutral, and factual. Help user see the full picture.
 - **Anti-metrics**: ❌ Inflated novelty scores, ❌ Missing obvious solutions, ❌ Emotional language
 
 ## Notes for AI Assistants
-- This project uses Prisma 7 (new config format in `prisma.config.ts`)
-- shadcn/ui with Tailwind CSS v4
+- This project uses Prisma 5
+- shadcn/ui with Tailwind CSS v4 (@tailwindcss/postcss)
 - No fulltext indexes in PostgreSQL (use regular indexes)
-- Background jobs will be BullMQ (separate worker process)
+- Background jobs use BullMQ (separate worker process)
 - NextAuth for authentication (models already in schema)
 
-## Current Status (Jan 5, 2026)
+## Current Status (Jan 7, 2026)
 - ✅ Phase 1 complete (Next.js, Prisma, shadcn/ui, CRUD, pages)
 - ✅ Phase 2 complete (BullMQ, Redis, Claude API, AI worker)
-- 📍 **Now:** Phase 3 - Core MVP (manual trigger, visual board, SSE, web search)
+- 📍 **Now:** Phase 3 - Core MVP (SSE, web search, results UI)
 - 🎯 Goal: Working MVP with full research pipeline
 
 **What Works Now:**
-- Create, edit, delete ideas
-- Auto-save with debouncing
-- Search functionality
+- Create, edit, delete ideas with auto-save
+- Manual "Research" button
+- Visual board view with card grid
+- Ranking system (#1, #2, #3)
+- Shelving with collapsible section
 - Background AI analysis worker
-- AI insights stored in database
 
-**What's Next (Phase 3 MVP):**
-- Manual "Research" button (remove auto-trigger)
-- Visual board view with idea cards
-- Real-time progress streaming (SSE)
-- Web search worker (first external data source)
+**What's Next:**
+- SSE for real-time progress streaming
+- Web search worker (SerpAPI)
 - Results display UI
-- Database schema updates (attachments, progress, ranking)
-
-For full workflow details, see [WORKFLOW.md](./WORKFLOW.md)
-For implementation details, see [IMPLEMENTATION.md](./IMPLEMENTATION.md)
 
 ---
-Last Updated: 2026-01-05
+Last Updated: 2026-01-07

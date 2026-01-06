@@ -1,108 +1,184 @@
 # Idea Bank
 
-An intelligent idea bank that replaces traditional notes apps with passive background research. Automatically researches your ideas as you write, surfacing competitive analysis, market insights, and validation data.
-
-## Core Philosophy
-
-**Neutral, Complete Research** - No sugar-coating, no false encouragement. Just comprehensive facts to help you make informed decisions.
+An intelligent idea bank that deeply researches business ideas on-demand. **Core philosophy: Neutral, complete, consistent research** - no false encouragement, just comprehensive facts.
 
 ## Features
 
-- 🎯 **Freeform Idea Capture** - Notes-app feel with rich text editing
-- 🔬 **Passive Background Research** - Automatic research triggers on significant changes
-- 🗺️ **Competitive Landscape Map** - Visual positioning of competitors
-- 💬 **Community Discovery** - Find real user discussions and pain points
-- 🏰 **Moat Analysis** - Defensibility assessment for your ideas
-- 💰 **Pricing Intelligence** - Competitor pricing models and trends
-- 👥 **People of Interest** - Domain experts, founders, and investors
-- 📊 **Neutral AI Assessment** - Realistic novelty scores without optimism bias
+- **Freeform Idea Capture** - Notes-app feel with auto-save
+- **Manual Research Trigger** - User controls when research happens
+- **Visual Board View** - Grid layout with custom ranking (Top 1, 2, 3)
+- **Background Research** - Continues even when you tab away
+- **Multi-Source Discovery** - Web, Product Hunt, GitHub, Reddit/HN
+- **Neutral AI Assessment** - Realistic novelty scores without optimism bias
 
 ## Tech Stack
 
-- **Frontend**: Next.js 14 (App Router) + TypeScript + Tailwind CSS
+- **Frontend**: Next.js 16 (App Router) + TypeScript + Tailwind CSS + shadcn/ui
 - **Database**: PostgreSQL + Prisma ORM
 - **Background Jobs**: BullMQ + Redis
-- **AI**: Anthropic Claude API
+- **AI**: Anthropic Claude API (Sonnet 4)
 - **Research APIs**: SerpAPI, Product Hunt, Crunchbase, GitHub
 
-## Getting Started
+## Quick Start
 
-### Prerequisites
+### 1. Install Dependencies
 
-- Node.js 18+
-- PostgreSQL database
-- Redis (for background jobs)
-
-### Installation
-
-1. Clone the repository
-```bash
-git clone https://github.com/yourusername/idea-bank.git
-cd idea-bank
-```
-
-2. Install dependencies
 ```bash
 npm install
 ```
 
-3. Set up environment variables
+### 2. Set Up Database
+
+**Option A: Neon (Recommended - Free)**
+1. Go to https://neon.tech
+2. Create a free account and project
+3. Copy the connection string
+4. Add to `.env` as `DATABASE_URL`
+
+**Option B: Supabase**
+1. Go to https://supabase.com
+2. Create a free account and project
+3. Go to Settings → Database
+4. Copy the connection string (use "Connection Pooling" URL)
+5. Add to `.env` as `DATABASE_URL`
+
+**Option C: Local PostgreSQL**
+```bash
+createdb ideabank
+# Set DATABASE_URL="postgresql://user:password@localhost:5432/ideabank"
+```
+
+### 3. Set Up Redis (For Background Research)
+
+**Option A: Upstash (Recommended - Free)**
+1. Go to https://upstash.com
+2. Create a free account and Redis database
+3. Copy the connection string
+4. Add to `.env` as `REDIS_URL`
+
+**Option B: Local Redis**
+```bash
+docker run -d -p 6379:6379 redis
+# Set REDIS_URL="redis://localhost:6379"
+```
+
+### 4. Set Up Claude API
+
+1. Go to https://console.anthropic.com
+2. Create an account and generate an API key
+3. Add to `.env` as `ANTHROPIC_API_KEY`
+
+### 5. Configure Environment
+
 ```bash
 cp .env.example .env
-# Edit .env with your database URL and API keys
+# Edit .env with your values
 ```
 
-4. Run database migrations
+### 6. Initialize Database
+
 ```bash
-npx prisma migrate dev
+npm run db:generate   # Generate Prisma Client
+npm run db:push       # Push schema to database
 ```
 
-5. Start the development server
+### 7. Start Development
+
 ```bash
+# Terminal 1: Next.js server
 npm run dev
+
+# Terminal 2: Background worker (for research)
+npm run worker
 ```
 
-Open [http://localhost:3000](http://localhost:3000) to see the app.
+Visit http://localhost:3000
 
-## Development
+## Usage
 
-### Database
+1. **Create an idea** - Click "New Idea" button
+2. **Write content** - Add a title and description (auto-saves)
+3. **Research** - Click the "Research" button when ready
+4. **Rank ideas** - Hover card menu → "Set as #1, #2, #3"
+5. **Shelve ideas** - Hover card menu → "Shelve idea"
 
-```bash
-# Generate Prisma client
-npx prisma generate
-
-# Create a migration
-npx prisma migrate dev --name your_migration_name
-
-# Open Prisma Studio
-npx prisma studio
-```
-
-### Project Structure
+## Project Structure
 
 ```
-├── app/                    # Next.js app directory
+├── app/                    # Next.js App Router
 │   ├── api/               # API routes
-│   ├── ideas/             # Ideas pages
-│   └── layout.tsx         # Root layout
-├── components/            # React components
-├── lib/                   # Utility libraries
-│   ├── ai/               # AI integration
-│   ├── queue/            # Background job queue
+│   │   └── ideas/         # Ideas CRUD + research
+│   ├── ideas/             # Ideas pages (list, editor)
+│   └── globals.css        # Tailwind theme
+├── components/            # React components (shadcn/ui)
+├── lib/
+│   ├── db.ts             # Prisma client singleton
+│   ├── ai/               # Claude API integration
+│   ├── queue/            # BullMQ setup
 │   └── research/         # Research logic
-├── prisma/               # Database schema
+├── prisma/
+│   └── schema.prisma     # Database models
 └── workers/              # Background workers
 ```
 
-## Implementation Plan
+## Scripts
 
-See [IMPLEMENTATION.md](./IMPLEMENTATION.md) for the complete implementation plan with detailed phases, features, and technical decisions.
+```bash
+npm run dev          # Start dev server
+npm run worker       # Start background worker
+npm run db:generate  # Generate Prisma client
+npm run db:push      # Push schema to DB
+npm run db:migrate   # Create migration
+npm run db:studio    # Open Prisma Studio GUI
+```
+
+## Environment Variables
+
+```bash
+DATABASE_URL=         # PostgreSQL connection string
+REDIS_URL=            # Redis connection string
+ANTHROPIC_API_KEY=    # Claude API key
+SERPAPI_API_KEY=      # Web search (optional)
+PRODUCT_HUNT_API_KEY= # Product data (optional)
+GITHUB_TOKEN=         # GitHub API (optional)
+```
+
+## Current Status
+
+**Working:**
+- Create, edit, delete ideas with auto-save
+- Manual "Research" button
+- Visual board view with card grid
+- Ranking system (#1, #2, #3)
+- Shelving with collapsible section
+- Background AI analysis worker
+
+**In Progress:**
+- SSE for real-time progress streaming
+- Web search worker (SerpAPI)
+- Results display UI
+
+## Troubleshooting
+
+### "Cannot connect to database"
+- Check `DATABASE_URL` in `.env`
+- Ensure PostgreSQL is running
+
+### "Prisma Client not generated"
+```bash
+npm run db:generate
+```
+
+### "Table does not exist"
+```bash
+npm run db:push
+```
+
+### Port 3000 already in use
+```bash
+npm run dev -- -p 3001
+```
 
 ## License
 
 MIT
-
-## Contributing
-
-Contributions are welcome! Please read the implementation plan first to understand the architecture and design philosophy.
