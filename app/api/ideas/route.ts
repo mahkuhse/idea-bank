@@ -63,6 +63,17 @@ export async function POST(request: NextRequest) {
       );
     }
 
+    // Ensure the user exists (create temp user if needed)
+    await prisma.user.upsert({
+      where: { id: userId },
+      update: {},
+      create: {
+        id: userId,
+        email: `${userId}@temp.local`,
+        name: 'Temporary User',
+      },
+    });
+
     const idea = await prisma.idea.create({
       data: {
         title,
