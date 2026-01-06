@@ -58,7 +58,7 @@ export async function PATCH(
   try {
     const { id } = await params;
     const body = await request.json();
-    const { title, content, contentText, status, userId } = body;
+    const { title, content, contentText, status, rank, isShelved } = body;
 
     const idea = await prisma.idea.update({
       where: { id },
@@ -67,6 +67,8 @@ export async function PATCH(
         ...(content !== undefined && { content }),
         ...(contentText !== undefined && { contentText }),
         ...(status !== undefined && { status }),
+        ...(rank !== undefined && { rank }),
+        ...(isShelved !== undefined && { isShelved }),
       },
       include: {
         tags: {

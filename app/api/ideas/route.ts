@@ -8,6 +8,8 @@ export async function GET(request: NextRequest) {
     const search = searchParams.get('search');
     const status = searchParams.get('status');
 
+    const shelved = searchParams.get('shelved');
+
     const ideas = await prisma.idea.findMany({
       where: {
         ...(search && {
@@ -17,8 +19,12 @@ export async function GET(request: NextRequest) {
           ],
         }),
         ...(status && { status: status as any }),
+        ...(shelved !== null && { isShelved: shelved === 'true' }),
       },
-      orderBy: { updatedAt: 'desc' },
+      orderBy: [
+        { rank: { sort: 'asc', nulls: 'last' } },
+        { updatedAt: 'desc' },
+      ],
       include: {
         tags: {
           include: {
